@@ -1,0 +1,477 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>The Royal Gym</title>
+    <!-- Tailwind CSS for modern fancy styling -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        /* Smooth scrolling */
+        html {
+            scroll-behavior: smooth;
+        }
+        /* Custom transitions for background switching */
+        .bg-section {
+            background-size: cover;
+            background-position: center;
+            background-attachment: fixed;
+            position: relative;
+            transition: background 1s ease-in-out;
+        }
+        .bg-overlay {
+            background: rgba(0, 0, 0, 0.82);
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+        }
+        /* Custom scrollbar */
+        ::-webkit-scrollbar {
+            width: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: rgba(0,0,0,0.3);
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #d97706;
+            border-radius: 3px;
+        }
+    </style>
+</head>
+<body class="bg-gray-950 text-white font-sans">
+
+   <!-- Navigation Bar -->
+<nav class="fixed top-0 left-0 right-0 z-50 bg-black/90 backdrop-blur-md border-b border-gray-800 transition-all duration-300">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="flex items-center justify-between h-16">
+            <!-- Logo -->
+            <div class="flex-shrink-0 font-bold text-xl tracking-wider text-amber-500">
+                THE ROYAL GYM
+            </div>
+            <!-- Desktop Navigation Menu -->
+            <div class="hidden md:block">
+                <div class="ml-10 flex items-baseline space-x-8">
+                    <a href="#home" class="hover:text-amber-400 transition-colors px-3 py-2 rounded-md text-sm font-medium">Home</a>
+                    <a href="#what-we-have" class="hover:text-amber-400 transition-colors px-3 py-2 rounded-md text-sm font-medium">What We Have</a>
+                    <a href="#what-we-offer" class="hover:text-amber-400 transition-colors px-3 py-2 rounded-md text-sm font-medium">What We Offer</a>
+                    <a href="#pricing" class="hover:text-amber-400 transition-colors px-3 py-2 rounded-md text-sm font-medium">Pricing</a>
+                    <a href="#contact" class="hover:text-amber-400 transition-colors px-3 py-2 rounded-md text-sm font-medium">Contact</a>
+                </div>
+            </div>
+            <!-- Mobile Menu Button -->
+            <div class="md:hidden flex items-center">
+                <button id="mobile-menu-button" class="text-gray-400 hover:text-white focus:outline-none focus:text-white">
+                    <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path>
+                    </svg>
+                </button>
+            </div>
+        </div>
+    </div>
+    <!-- Mobile Dropdown Menu -->
+    <div id="mobile-menu" class="hidden md:hidden bg-black/95 border-b border-gray-800 px-4 pt-2 pb-4 space-y-2">
+        <a href="#home" class="block text-gray-300 hover:text-amber-400 px-3 py-2 rounded-md text-base font-medium">Home</a>
+        <a href="#what-we-have" class="block text-gray-300 hover:text-amber-400 px-3 py-2 rounded-md text-base font-medium">What We Have</a>
+        <a href="#what-we-offer" class="block text-gray-300 hover:text-amber-400 px-3 py-2 rounded-md text-base font-medium">What We Offer</a>
+        <a href="#pricing" class="block text-gray-300 hover:text-amber-400 px-3 py-2 rounded-md text-base font-medium">Pricing</a>
+        <a href="#contact" class="block text-gray-300 hover:text-amber-400 px-3 py-2 rounded-md text-base font-medium">Contact</a>
+    </div>
+</nav>
+
+<!-- Home Section -->
+<section id="home" class="bg-section min-h-screen flex items-center justify-center text-center px-4 pt-16" style="background-image: url('https://images.unsplash.com/photo-1497366216548-37526070297c?auto=format&fit=crop&w=1920&q=80');">
+    <div class="bg-overlay"></div>
+    <div class="relative z-10 max-w-3xl mx-auto space-y-6">
+        <h1 class="text-4xl sm:text-6xl font-extrabold tracking-tight text-white uppercase">
+            Welcome to <span class="text-amber-500">The Royal Gym</span>
+        </h1>
+        <p class="text-lg sm:text-xl text-gray-300">
+            Step into excellence. Experience premium fitness coaching, elite equipment, and a royal environment designed for your ultimate transformation.
+        </p>
+        <div class="pt-4">
+            <a href="#what-we-have" class="inline-block bg-amber-500 hover:bg-amber-600 text-black font-semibold px-8 py-3 rounded-full transition-all shadow-lg">
+                Take a Tour
+            </a>
+        </div>
+    </div>
+</section>
+
+<!-- What We Have Section -->
+<section id="what-we-have" class="bg-section min-h-screen py-28 px-4 sm:px-6 lg:px-8" style="background-image: url('https://images.unsplash.com/photo-1534438327276-14e5300c3a48?auto=format&fit=crop&w=1920&q=80');">
+    <div class="bg-overlay"></div>
+    <div class="relative z-10 max-w-7xl mx-auto w-full space-y-16">
+        
+        <div class="text-center space-y-3">
+            <h2 class="text-3xl sm:text-5xl font-extrabold tracking-tight text-amber-500 uppercase">What We Have</h2>
+            <p class="text-gray-300 max-w-2xl mx-auto text-base sm:text-lg">Take a detailed tour through our elite collection of professional-grade machines, specialized zones, and luxury facilities.</p>
+        </div>
+
+        <!-- Cardio Equipment -->
+        <div class="space-y-6">
+            <div class="border-l-4 border-amber-500 pl-4">
+                <h3 class="text-2xl font-bold text-white">Cardio Equipment</h3>
+                <p class="text-gray-400 text-sm">Boost your endurance, burn calories efficiently, and enhance cardiovascular health.</p>
+            </div>
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                
+                <!-- Cross-Trainer Machines -->
+                <div class="bg-gray-900/90 border border-gray-800 rounded-xl overflow-hidden shadow-xl hover:border-amber-500 transition-all flex flex-col">
+                    <img src="https://images.unsplash.com/photo-1662386392766-9edacc1318fd?q=80&w=1170&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D" alt="Cross-Trainer Machines" class="h-48 w-full object-cover">
+                    <div class="p-6 flex-1 flex flex-col justify-between">
+                        <div>
+                            <h4 class="text-lg font-bold text-amber-400 mb-2">Cross-Trainer Machines</h4>
+                            <p class="text-gray-300 text-sm">Low-impact full-body workouts that protect your joints while maximizing calorie burn and toning both upper and lower body simultaneously.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Treadmill Machines -->
+                <div class="bg-gray-900/90 border border-gray-800 rounded-xl overflow-hidden shadow-xl hover:border-amber-500 transition-all flex flex-col">
+                    <img src="https://images.unsplash.com/photo-1652364653960-1c23c208ef43?q=80&w=880&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D" alt="Treadmill Machines" class="h-48 w-full object-cover">
+                    <div class="p-6 flex-1 flex flex-col justify-between">
+                        <div>
+                            <h4 class="text-lg font-bold text-amber-400 mb-2">Treadmill Machines</h4>
+                            <p class="text-gray-300 text-sm">High-performance commercial treadmills featuring customizable incline levels, shock-absorption running decks, and built-in heart rate monitors.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Stationary Bikes -->
+                <div class="bg-gray-900/90 border border-gray-800 rounded-xl overflow-hidden shadow-xl hover:border-amber-500 transition-all flex flex-col">
+                    <img src="https://images.unsplash.com/photo-1637633716870-3460aa785ff4?q=80&w=1170&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D" alt="Stationary Bikes" class="h-48 w-full object-cover">
+                    <div class="p-6 flex-1 flex flex-col justify-between">
+                        <div>
+                            <h4 class="text-lg font-bold text-amber-400 mb-2">Stationary Bikes</h4>
+                            <p class="text-gray-300 text-sm">Ergonomic upright and recumbent stationary bikes designed for intense leg strengthening, endurance cycling, and comfortable posture support.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- HIIT-Training Area -->
+                <div class="bg-gray-900/90 border border-gray-800 rounded-xl overflow-hidden shadow-xl hover:border-amber-500 transition-all flex flex-col">
+                    <img src="https://images.unsplash.com/photo-1591258370814-01609b341790?q=80&w=687&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D" alt="HIIT-Training Area" class="h-48 w-full object-cover">
+                    <div class="p-6 flex-1 flex flex-col justify-between">
+                        <div>
+                            <h4 class="text-lg font-bold text-amber-400 mb-2">HIIT-Training Area</h4>
+                            <p class="text-gray-300 text-sm">A dedicated open space equipped with battle ropes, agility ladders, plyo boxes, and medicine balls for high-intensity interval training.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- And Many More (Cardio) -->
+                <div class="bg-gray-900/90 border border-gray-800 rounded-xl p-6 shadow-xl hover:border-amber-500 transition-all flex flex-col justify-center items-center text-center">
+                    <div class="text-amber-500 text-4xl mb-3">✨</div>
+                    <h4 class="text-lg font-bold text-amber-400 mb-2">And Many More</h4>
+                    <p class="text-gray-300 text-sm">Various specialized cardio add-ons and advanced heart-rate tracking apparatuses available.</p>
+                </div>
+
+            </div>
+        </div>
+
+        <!-- Strength Training Machines -->
+        <div class="space-y-6 pt-6">
+            <div class="border-l-4 border-amber-500 pl-4">
+                <h3 class="text-2xl font-bold text-white">Strength Training Machines</h3>
+                <p class="text-gray-400 text-sm">Isolate muscles with pin-point accuracy using premium selectorized and plate-loaded machines.</p>
+            </div>
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                
+                <!-- Hip Abductor/Adductor Machine -->
+                <div class="bg-gray-900/90 border border-gray-800 rounded-xl overflow-hidden shadow-xl hover:border-amber-500 transition-all flex flex-col">
+                    <img src="https://images.unsplash.com/photo-1576491742123-735882d4ca7e?q=80&w=1172&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D" alt="Hip Abductor/Adductor Machine" class="h-48 w-full object-cover">
+                    <div class="p-6 flex-1 flex flex-col justify-between">
+                        <div>
+                            <h4 class="text-lg font-bold text-amber-400 mb-2">Hip Abductor/Adductor Machine</h4>
+                            <p class="text-gray-300 text-sm">Targets outer and inner thigh muscles effectively, improving core stability and lower-body mobility.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Leg Extension Machine -->
+                <div class="bg-gray-900/90 border border-gray-800 rounded-xl overflow-hidden shadow-xl hover:border-amber-500 transition-all flex flex-col">
+                    <img src="https://images.unsplash.com/photo-1738524107966-23c49aa65ba3?q=80&w=687&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D" alt="Leg Extension Machine" class="h-48 w-full object-cover">
+                    <div class="p-6 flex-1 flex flex-col justify-between">
+                        <div>
+                            <h4 class="text-lg font-bold text-amber-400 mb-2">Leg Extension Machine</h4>
+                            <p class="text-gray-300 text-sm">Isolates and strengthens the quadriceps with smooth resistance arcs for defined leg muscle growth.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Leg Curl Machine -->
+                <div class="bg-gray-900/90 border border-gray-800 rounded-xl overflow-hidden shadow-xl hover:border-amber-500 transition-all flex flex-col">
+                    <img src="https://images.unsplash.com/photo-1641785041080-54b0413a2aa9?q=80&w=1170&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D" alt="Leg Curl Machine" class="h-48 w-full object-cover">
+                    <div class="p-6 flex-1 flex flex-col justify-between">
+                        <div>
+                            <h4 class="text-lg font-bold text-amber-400 mb-2">Leg Curl Machine</h4>
+                            <p class="text-gray-300 text-sm">Focuses on hamstring development, boosting posterior chain power and knee joint stability.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Leg Press Machine -->
+                <div class="bg-gray-900/90 border border-gray-800 rounded-xl overflow-hidden shadow-xl hover:border-amber-500 transition-all flex flex-col">
+                    <img src="https://images.unsplash.com/photo-1712992031203-45538d32ab43?q=80&w=1170&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D" alt="Leg Press Machine" class="h-48 w-full object-cover">
+                    <div class="p-6 flex-1 flex flex-col justify-between">
+                        <div>
+                            <h4 class="text-lg font-bold text-amber-400 mb-2">Leg Press Machine</h4>
+                            <p class="text-gray-300 text-sm">Allows heavy load pushing safely to build massive leg strength without stressing your lower back.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Hack Squat Machine -->
+                <div class="bg-gray-900/90 border border-gray-800 rounded-xl overflow-hidden shadow-xl hover:border-amber-500 transition-all flex flex-col">
+                    <img src="https://images.unsplash.com/photo-1653276527526-f902a569d3c9?q=80&w=764&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D" alt="Hack Squat Machine" class="h-48 w-full object-cover">
+                    <div class="p-6 flex-1 flex flex-col justify-between">
+                        <div>
+                            <h4 class="text-lg font-bold text-amber-400 mb-2">Hack Squat Machine</h4>
+                            <p class="text-gray-300 text-sm">Guided squat movement designed to target deep quad sweeps and glutes with ultimate safety.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Chest Press Machine -->
+                <div class="bg-gray-900/90 border border-gray-800 rounded-xl overflow-hidden shadow-xl hover:border-amber-500 transition-all flex flex-col">
+                    <img src="https://images.unsplash.com/photo-1694856677238-07fe09f6e31a?q=80&w=687&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D" alt="Chest Press Machine" class="h-48 w-full object-cover">
+                    <div class="p-6 flex-1 flex flex-col justify-between">
+                        <div>
+                            <h4 class="text-lg font-bold text-amber-400 mb-2">Chest Press Machine</h4>
+                            <p class="text-gray-300 text-sm">Builds pectoral muscles, triceps, and anterior shoulders with a controlled horizontal pushing motion.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Lat Pulldown Machine -->
+                <div class="bg-gray-900/90 border border-gray-800 rounded-xl overflow-hidden shadow-xl hover:border-amber-500 transition-all flex flex-col">
+                    <img src="https://images.unsplash.com/photo-1646072508097-0c8b3cbe44bc?q=80&w=687&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D" alt="Lat Pulldown Machine" class="h-48 w-full object-cover">
+                    <div class="p-6 flex-1 flex flex-col justify-between">
+                        <div>
+                            <h4 class="text-lg font-bold text-amber-400 mb-2">Lat Pulldown Machine</h4>
+                            <p class="text-gray-300 text-sm">Essential for developing wide lats and upper back thickness for a classic V-taper physique.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Shoulder Press Machine -->
+                <div class="bg-gray-900/90 border border-gray-800 rounded-xl overflow-hidden shadow-xl hover:border-amber-500 transition-all flex flex-col">
+                    <img src="https://images.unsplash.com/photo-1694856677238-07fe09f6e31a?q=80&w=687&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D" alt="Shoulder Press Machine" class="h-48 w-full object-cover">
+                    <div class="p-6 flex-1 flex flex-col justify-between">
+                        <div>
+                            <h4 class="text-lg font-bold text-amber-400 mb-2">Shoulder Press Machine</h4>
+                            <p class="text-gray-300 text-sm">Overhead vertical press station designed for building broad, powerful deltoids safely.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Parallel Bar + Abs + Pull-Up Station -->
+                <div class="bg-gray-900/90 border border-gray-800 rounded-xl overflow-hidden shadow-xl hover:border-amber-500 transition-all flex flex-col">
+                    <img src="https://images.unsplash.com/photo-1585152969004-0fb794d6025e?q=80&w=687&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D" alt="Parallel Bar + Abs + Pull-Up Station" class="h-48 w-full object-cover">
+                    <div class="p-6 flex-1 flex flex-col justify-between">
+                        <div>
+                            <h4 class="text-lg font-bold text-amber-400 mb-2">Parallel Bar + Abs + Pull-Up Station</h4>
+                            <p class="text-gray-300 text-sm">Multi-function tower for bodyweight dips, vertical knee raises, and pull-ups to carve your core.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Smith Machines -->
+                <div class="bg-gray-900/90 border border-gray-800 rounded-xl overflow-hidden shadow-xl hover:border-amber-500 transition-all flex flex-col">
+                    <img src="https://images.unsplash.com/photo-1683147778229-e8479ec374ff?q=80&w=687&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D" alt="Smith Machines" class="h-48 w-full object-cover">
+                    <div class="p-6 flex-1 flex flex-col justify-between">
+                        <div>
+                            <h4 class="text-lg font-bold text-amber-400 mb-2">Smith Machines</h4>
+                            <p class="text-gray-300 text-sm">Barbell fixed within steel rails providing guided motion for bench presses, squats, and lunges.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Cable Crossover Machines -->
+                <div class="bg-gray-900/90 border border-gray-800 rounded-xl overflow-hidden shadow-xl hover:border-amber-500 transition-all flex flex-col">
+                    <img src="https://images.unsplash.com/photo-1604480133435-25b86862d276?q=80&w=687&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D" alt="Cable Crossover Machines" class="h-48 w-full object-cover">
+                    <div class="p-6 flex-1 flex flex-col justify-between">
+                        <div>
+                            <h4 class="text-lg font-bold text-amber-400 mb-2">Cable Crossover Machines</h4>
+                            <p class="text-gray-300 text-sm">Dual adjustable cable pulleys allowing endless exercise variations for constant tension training.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- And Many More (Strength) -->
+                <div class="bg-gray-900/90 border border-gray-800 rounded-xl p-6 shadow-xl hover:border-amber-500 transition-all flex flex-col justify-center items-center text-center">
+                    <div class="text-amber-500 text-4xl mb-3">🔥</div>
+                    <h4 class="text-lg font-bold text-amber-400 mb-2">And Many More</h4>
+                    <p class="text-gray-300 text-sm">Additional specialized isolated strength training machines and custom attachments.</p>
+                </div>
+
+            </div>
+        </div>
+
+        <!-- Free Weights -->
+        <div class="space-y-6 pt-6">
+            <div class="border-l-4 border-amber-500 pl-4">
+                <h3 class="text-2xl font-bold text-white">Free Weights</h3>
+                <p class="text-gray-400 text-sm">Build raw strength, stabilizer muscles, and natural movement patterns.</p>
+            </div>
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                
+                <!-- Dumbbells -->
+                <div class="bg-gray-900/90 border border-gray-800 rounded-xl overflow-hidden shadow-xl hover:border-amber-500 transition-all flex flex-col">
+                    <img src="https://images.unsplash.com/photo-1534438327276-14e5300c3a48?q=80&w=1170&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D" alt="Dumbbells" class="h-48 w-full object-cover">
+                    <div class="p-6 flex-1 flex flex-col justify-between">
+                        <div>
+                            <h4 class="text-lg font-bold text-amber-400 mb-2">Dumbbells</h4>
+                            <p class="text-gray-300 text-sm">Full professional range of urethane dumbbells starting from lightweight warmups to heavy sets.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Barbells -->
+                <div class="bg-gray-900/90 border border-gray-800 rounded-xl overflow-hidden shadow-xl hover:border-amber-500 transition-all flex flex-col">
+                    <img src="https://images.unsplash.com/photo-1685633225198-41691f35cc4c?q=80&w=687&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D" alt="Barbells" class="h-48 w-full object-cover">
+                    <div class="p-6 flex-1 flex flex-col justify-between">
+                        <div>
+                            <h4 class="text-lg font-bold text-amber-400 mb-2">Barbells</h4>
+                            <p class="text-gray-300 text-sm">Straight and EZ-curl Olympic barbells balanced for maximum grip comfort and heavy lifting.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Weight Plates -->
+                <div class="bg-gray-900/90 border border-gray-800 rounded-xl overflow-hidden shadow-xl hover:border-amber-500 transition-all flex flex-col">
+                    <img src="https://images.unsplash.com/photo-1590238869117-d68df0152f96?q=80&w=1074&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D" alt="Weight Plates" class="h-48 w-full object-cover">
+                    <div class="p-6 flex-1 flex flex-col justify-between">
+                        <div>
+                            <h4 class="text-lg font-bold text-amber-400 mb-2">Weight Plates</h4>
+                            <p class="text-gray-300 text-sm">Rubberized bumper plates and cast iron weight plates for precise load progression.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- And Many More (Free Weights) -->
+                <div class="bg-gray-900/90 border border-gray-800 rounded-xl p-6 shadow-xl hover:border-amber-500 transition-all flex flex-col justify-center items-center text-center">
+                    <div class="text-amber-500 text-4xl mb-3">💪</div>
+                    <h4 class="text-lg font-bold text-amber-400 mb-2">And Many More</h4>
+                    <p class="text-gray-300 text-sm">Kettlebells, medicine balls, weight trees, and specialized lifting belts.</p>
+                </div>
+
+            </div>
+        </div>
+
+        <!-- Facilities Grid (Changing rooms, Supplement bar, Hydration Hub) -->
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 pt-6">
+            
+            <!-- Changing Rooms -->
+            <div class="bg-gray-900/90 border border-gray-800 rounded-xl overflow-hidden shadow-xl hover:border-amber-500 transition-all flex flex-col">
+                <img src="https://images.unsplash.com/photo-1545693315-85b6be26a3d6?q=80&w=1171&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D"" alt="Changing Rooms" class="h-48 w-full object-cover">
+                <div class="p-6 flex-1 flex flex-col justify-between">
+                    <div>
+                        <h3 class="text-xl font-bold text-amber-400 mb-2">Changing Rooms & Washrooms</h3>
+                        <p class="text-gray-300 text-sm">Separate, hygienic, and secure male and female washrooms and changing rooms equipped with hot water showers and lockers.</p>
+                    </div>
+                    <div class="mt-4 pt-4 border-t border-gray-800 text-amber-400 text-xs font-semibold uppercase tracking-wider">And Many More Facilities</div>
+                </div>
+            </div>
+
+            <!-- Supplement Bar -->
+            <div class="bg-gray-900/90 border border-gray-800 rounded-xl overflow-hidden shadow-xl hover:border-amber-500 transition-all flex flex-col">
+                <img src="https://images.unsplash.com/photo-1671033580695-8e4f799c9fb4?q=80&w=1025&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D" alt="Supplement Bar" class="h-48 w-full object-cover">
+                <div class="p-6 flex-1 flex flex-col justify-between">
+                    <div>
+                        <h3 class="text-xl font-bold text-amber-400 mb-2">Snacks & Supplements</h3>
+                        <p class="text-gray-300 text-sm">Snacks, pre-workouts, and supplement refrigerators stocked with top-tier protein shakes and energy drinks for optimal recovery.</p>
+                    </div>
+                    <div class="mt-4 pt-4 border-t border-gray-800 text-amber-400 text-xs font-semibold uppercase tracking-wider">And Many More Snacks</div>
+                </div>
+            </div>
+
+            <!-- Hydration Hub -->
+            <div class="bg-gray-900/90 border border-gray-800 rounded-xl overflow-hidden shadow-xl hover:border-amber-500 transition-all flex flex-col">
+                <img src="https://images.unsplash.com/photo-1685186112493-564c68f75d57?q=80&w=1074&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D" alt="Hydration Hub" class="h-48 w-full object-cover">
+                <div class="p-6 flex-1 flex flex-col justify-between">
+                    <div>
+                        <h3 class="text-xl font-bold text-amber-400 mb-2">Water Filter Hub</h3>
+                        <p class="text-gray-300 text-sm">Multi-temperature water filtration stations providing chilled, hot, and normal drinking water to keep you hydrated.</p>
+                    </div>
+                    <div class="mt-4 pt-4 border-t border-gray-800 text-amber-400 text-xs font-semibold uppercase tracking-wider">And Many More Options</div>
+                </div>
+            </div>
+
+        </div>
+
+    </div>
+</section>
+
+<!-- What We Offer Section -->
+<section id="what-we-offer" class="bg-section min-h-screen py-24 px-4 sm:px-6 lg:px-8 flex items-center justify-center" style="background-image: url('https://images.unsplash.com/photo-1517838277536-f5f99be501cd?auto=format&fit=crop&w=1920&q=80');">
+    <div class="bg-overlay"></div>
+    <div class="relative z-10 max-w-6xl mx-auto text-center space-y-12 w-full">
+        <h2 class="text-3xl sm:text-5xl font-bold tracking-tight text-amber-500 uppercase">What We Offer</h2>
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
+            <div class="bg-black/80 border border-gray-800 p-6 rounded-2xl shadow-xl space-y-4">
+                <div class="text-amber-500 text-4xl">🏋️‍♂️</div>
+                <h3 class="text-xl font-bold text-white">Workout Charts</h3>
+                <p class="text-gray-300 text-sm">Customized workout routines tailored specifically to your body type and fitness level.</p>
+            </div>
+            <div class="bg-black/80 border border-gray-800 p-6 rounded-2xl shadow-xl space-y-4">
+                <div class="text-amber-500 text-4xl">🥗</div>
+                <h3 class="text-xl font-bold text-white">Meal Plans</h3>
+                <p class="text-gray-300 text-sm">Nutritional guidance and scientifically backed meal plans to accelerate muscle growth or fat loss.</p>
+            </div>
+            <div class="bg-black/80 border border-gray-800 p-6 rounded-2xl shadow-xl space-y-4">
+                <div class="text-amber-500 text-4xl">🤝</div>
+                <h3 class="text-xl font-bold text-white">Personal Training</h3>
+                <p class="text-gray-300 text-sm">One-on-one expert guidance and continuous motivation from professional trainers.</p>
+            </div>
+            <div class="bg-black/80 border border-gray-800 p-6 rounded-2xl shadow-xl space-y-4 flex flex-col justify-center items-center">
+                <div class="text-amber-500 text-4xl">🌟</div>
+                <h3 class="text-xl font-bold text-white">And Many More</h3>
+                <p class="text-gray-300 text-sm">Body composition analysis, progress tracking sessions, and exclusive VIP guest passes.</p>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Pricing Section -->
+<section id="pricing" class="bg-section min-h-screen py-24 px-4 sm:px-6 lg:px-8 flex items-center justify-center text-center" style="background-image: url('https://images.unsplash.com/photo-1540497077202-7c8a3999166f?auto=format&fit=crop&w=1920&q=80');">
+    <div class="bg-overlay"></div>
+    <div class="relative z-10 max-w-2xl mx-auto space-y-6">
+        <h2 class="text-3xl sm:text-5xl font-bold tracking-tight text-amber-500 uppercase">Pricing</h2>
+        <p class="text-gray-300 text-lg">Flexible and transparent pricing packages coming soon. Stay tuned for royal rates!</p>
+    </div>
+</section>
+
+<!-- Contact Section -->
+<section id="contact" class="bg-section min-h-screen py-24 px-4 sm:px-6 lg:px-8 flex items-center justify-center text-center" style="background-image: url('https://images.unsplash.com/photo-1574680096145-d05b474e2155?auto=format&fit=crop&w=1920&q=80');">
+    <div class="bg-overlay"></div>
+    <div class="relative z-10 max-w-2xl mx-auto space-y-6">
+        <h2 class="text-3xl sm:text-5xl font-bold tracking-tight text-amber-500 uppercase">Contact Us</h2>
+        <p class="text-gray-300 text-lg">Get in touch with us or visit the gym directly. Contact details and location map will be updated soon.</p>
+    </div>
+</section>
+
+<!-- Footer -->
+<footer class="bg-black border-t border-gray-900 py-6 text-center text-gray-500 text-sm">
+    &copy; 2026 The Royal Gym. All rights reserved.
+</footer>
+
+<!-- JavaScript for Mobile Menu Toggle -->
+<script>
+    const btn = document.getElementById('mobile-menu-button');
+    const menu = document.getElementById('mobile-menu');
+
+    btn.addEventListener('click', () => {
+        menu.classList.toggle('hidden');
+    });
+
+    // Close mobile menu when a link is clicked
+    document.querySelectorAll('#mobile-menu a').forEach(link => {
+        link.addEventListener('click', () => {
+            menu.classList.add('hidden');
+        });
+    });
+</script>
+</body>
+</html>
