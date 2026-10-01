@@ -1,32 +1,218 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" class="preloading">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>The Royal Gym</title>
+    <!-- Inline crown mark, so the browser's automatic /favicon.ico probe doesn't 404 -->
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='6' fill='%23000'/><path d='M6 23h20M6 23 4.5 10l6.5 4.5L16 6l5 8.5 6.5-4.5L26 23' fill='none' stroke='%23f59e0b' stroke-width='2.4' stroke-linejoin='round' stroke-linecap='round'/></svg>">
     <!-- Tailwind CSS for modern fancy styling -->
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         /* Smooth scrolling */
         html {
             scroll-behavior: smooth;
+            background: #000;
+            scrollbar-gutter: stable;
         }
-        /* Custom transitions for background switching */
-        .bg-section {
-            background-size: cover;
-            background-position: center;
-            background-attachment: fixed;
-            position: relative;
-            transition: background 1s ease-in-out;
+
+        /* ---------- Scroll-driven frame-sequence background ---------- */
+
+        /* Fixed stage holding the two canvases and the readability scrim.
+           Stays at z-index 0; page content is lifted to 1 below. */
+        #bg-stage {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 0;
+            background: #000;
+            overflow: hidden;
+            pointer-events: none;
         }
-        .bg-overlay {
-            background: rgba(0, 0, 0, 0.82);
+        /* Blur layer: tiny backing store, upscaled and blurred by the GPU.
+           Scaled past the edges so the soft border never shows. */
+        #bg-blur,
+        #bg-main {
             position: absolute;
             top: 0;
             left: 0;
-            right: 0;
-            bottom: 0;
+            width: 100%;
+            height: 100%;
+            display: block;
         }
+        #bg-blur {
+            filter: blur(28px) brightness(0.5);
+            transform: scale(1.12);
+        }
+        /* Darkens the footage so the foreground copy stays readable.
+           Single knob — this replaces the old per-section .bg-overlay.
+           The footage averages only ~20-30% luminance already, so the old
+           0.82 used for the stock photos would crush it to pure black.
+           0.60 is the lowest value where white body text (7.3:1) and the
+           amber headings (3.4:1) both still clear WCAG against the brightest
+           pixels in the footage. Raise it toward 0.75 for more contrast;
+           going below 0.60 starts to fail the amber headings. */
+        #bg-scrim {
+            --scrim: 0.60;
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, var(--scrim));
+        }
+
+        /* Lift page content above the fixed stage. Static elements paint
+           below a positioned fixed ancestor, so the footer needs this too.
+           <nav> is left alone — it is already fixed z-50. */
+        section,
+        footer {
+            position: relative;
+            z-index: 1;
+        }
+
+        /* Sections keep the class so their `relative z-10` children still
+           stack correctly; the background image behaviour is gone. */
+        .bg-section {
+            position: relative;
+        }
+
+        /* ---------- Content tiles (icon-led, photo-free) ----------
+           Plain translucent fills, not backdrop-filter: 26 tiles each reading
+           back a continuously animating canvas would wreck the scroll fps. */
+
+        .tile {
+            display: flex;
+            flex-direction: column;
+            gap: 0.6rem;
+            padding: 1.15rem 1.15rem 1.3rem;
+            border-radius: 0.75rem;
+            border: 1px solid rgba(255, 255, 255, 0.09);
+            background: rgba(0, 0, 0, 0.42);
+            transition: border-color .25s ease, background-color .25s ease, transform .25s ease;
+        }
+        .tile:hover {
+            border-color: rgba(245, 158, 11, 0.55);
+            background: rgba(0, 0, 0, 0.58);
+            transform: translateY(-2px);
+        }
+        .tile svg {
+            width: 1.6rem;
+            height: 1.6rem;
+            color: #f59e0b;
+            flex: none;
+        }
+        .tile h4 {
+            font-size: 0.9rem;
+            font-weight: 600;
+            line-height: 1.3;
+            color: #fff;
+        }
+        .tile p {
+            font-size: 0.78rem;
+            line-height: 1.55;
+            color: #9ca3af;
+        }
+        /* "And Many More" tiles read as a quiet terminator, not another item. */
+        .tile-more {
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            border-style: dashed;
+            background: rgba(0, 0, 0, 0.28);
+        }
+
+        /* Larger panels for the three facilities */
+        .panel {
+            display: flex;
+            flex-direction: column;
+            gap: 0.75rem;
+            padding: 1.6rem;
+            border-radius: 0.85rem;
+            border: 1px solid rgba(255, 255, 255, 0.09);
+            background: rgba(0, 0, 0, 0.42);
+            transition: border-color .25s ease, background-color .25s ease;
+        }
+        .panel:hover {
+            border-color: rgba(245, 158, 11, 0.55);
+            background: rgba(0, 0, 0, 0.58);
+        }
+        .panel svg {
+            width: 2rem;
+            height: 2rem;
+            color: #f59e0b;
+            flex: none;
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+            .tile:hover { transform: none; }
+        }
+
+        /* ---------- Preloader ---------- */
+
+        html.preloading,
+        html.preloading body {
+            overflow: hidden;
+            height: 100%;
+        }
+        #preloader {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 100;
+            background: #000;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 1.5rem;
+            opacity: 1;
+            transition: opacity 0.6s ease;
+        }
+        #preloader.is-done {
+            opacity: 0;
+            pointer-events: none;
+        }
+        #preloader .pre-mark {
+            font-weight: 700;
+            letter-spacing: 0.3em;
+            font-size: 0.95rem;
+            color: #f59e0b;
+            text-transform: uppercase;
+        }
+        #preloader .pre-track {
+            width: min(260px, 60vw);
+            height: 2px;
+            background: rgba(255, 255, 255, 0.15);
+            overflow: hidden;
+        }
+        #preloader .pre-bar {
+            width: 0%;
+            height: 100%;
+            background: #f59e0b;
+            transition: width 0.2s linear;
+        }
+        #preloader .pre-pct {
+            font-size: 0.7rem;
+            letter-spacing: 0.2em;
+            color: #6b7280;
+        }
+
+        /* ---------- Reduced motion ---------- */
+
+        @media (prefers-reduced-motion: reduce) {
+            html {
+                scroll-behavior: auto;
+            }
+            #bg-blur {
+                transition: none;
+            }
+        }
+
         /* Custom scrollbar */
         ::-webkit-scrollbar {
             width: 6px;
@@ -40,7 +226,58 @@
         }
     </style>
 </head>
-<body class="bg-gray-950 text-white font-sans">
+<body class="bg-transparent text-white font-sans">
+
+<!-- Scroll-driven video background: blurred side-fill + crisp frame + scrim -->
+<div id="bg-stage" aria-hidden="true">
+    <canvas id="bg-blur"></canvas>
+    <canvas id="bg-main"></canvas>
+    <div id="bg-scrim"></div>
+</div>
+
+<!-- Preloader shown while the frame sequence downloads -->
+<div id="preloader">
+    <div class="pre-mark">The Royal Gym</div>
+    <div class="pre-track"><div class="pre-bar" id="pre-bar"></div></div>
+    <div class="pre-pct" id="pre-pct">0%</div>
+</div>
+
+<!-- Line-icon sprite. Each tile references one of these with <use href="#i-...">.
+     Stroke styling is set on the referencing <svg>, so the symbols carry geometry only. -->
+<svg xmlns="http://www.w3.org/2000/svg" style="display:none" aria-hidden="true">
+    <!-- cardio -->
+    <symbol id="i-elliptical" viewBox="0 0 24 24"><ellipse cx="12" cy="18" rx="8" ry="3"/><path d="M7 4l3 11M17 4l-3 11"/></symbol>
+    <symbol id="i-treadmill" viewBox="0 0 24 24"><rect x="2" y="15" width="13" height="4" rx="2"/><path d="M13.5 15V5h6"/></symbol>
+    <symbol id="i-bike" viewBox="0 0 24 24"><circle cx="7" cy="16" r="4"/><path d="M7 12V5H4"/><path d="M7 12h8V8h3"/><path d="M11 20h9"/></symbol>
+    <symbol id="i-bolt" viewBox="0 0 24 24"><path d="M13 2L4 14h6l-1 8 9-12h-6z"/></symbol>
+    <!-- strength: seat/rail plus the direction of the movement -->
+    <symbol id="i-abductor" viewBox="0 0 24 24"><path d="M12 3v18"/><path d="M9 8l-5 4 5 4"/><path d="M15 8l5 4-5 4"/></symbol>
+    <symbol id="i-leg-ext" viewBox="0 0 24 24"><path d="M3 20v-7h6"/><path d="M9 13l8-5"/><path d="M13 8h4v4"/></symbol>
+    <symbol id="i-leg-curl" viewBox="0 0 24 24"><path d="M3 4v7h6"/><path d="M9 11l8 5"/><path d="M13 16h4v-4"/></symbol>
+    <symbol id="i-leg-press" viewBox="0 0 24 24"><path d="M3 20h7"/><path d="M4 20L17 6"/><path d="M9 11l4 4"/><path d="M17 6h-4M17 6v4"/></symbol>
+    <symbol id="i-hack-squat" viewBox="0 0 24 24"><path d="M4 20L13 4"/><path d="M10 20L19 4"/><path d="M7 14h5"/><path d="M2 20h9"/></symbol>
+    <symbol id="i-chest-press" viewBox="0 0 24 24"><path d="M5 4v16"/><path d="M9 9h8M9 15h8"/><path d="M14 6l3 3-3 3M14 12l3 3-3 3"/></symbol>
+    <symbol id="i-lat-pulldown" viewBox="0 0 24 24"><path d="M4 4h16"/><path d="M12 4v12"/><path d="M8 12l4 4 4-4"/></symbol>
+    <symbol id="i-shoulder-press" viewBox="0 0 24 24"><path d="M4 20h16"/><path d="M12 20V8"/><path d="M8 12l4-4 4 4"/></symbol>
+    <symbol id="i-pullup" viewBox="0 0 24 24"><path d="M4 4h16"/><path d="M5 4v16M19 4v16"/><path d="M9 4v3M15 4v3"/></symbol>
+    <symbol id="i-smith" viewBox="0 0 24 24"><path d="M7 3v18M17 3v18"/><path d="M3 12h18"/></symbol>
+    <symbol id="i-cable" viewBox="0 0 24 24"><path d="M4 3v18M20 3v18"/><path d="M4 6l16 12M20 6L4 18"/></symbol>
+    <!-- free weights -->
+    <symbol id="i-dumbbell" viewBox="0 0 24 24"><path d="M7 8v8M17 8v8"/><path d="M4 10v4M20 10v4"/><path d="M7 12h10"/></symbol>
+    <symbol id="i-barbell" viewBox="0 0 24 24"><path d="M2 9v6M5 7v10M19 7v10M22 9v6"/><path d="M5 12h14"/></symbol>
+    <symbol id="i-plate" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="2.5"/></symbol>
+    <!-- facilities -->
+    <symbol id="i-locker" viewBox="0 0 24 24"><rect x="5" y="3" width="14" height="18" rx="2"/><path d="M12 3v18"/><path d="M9 11v2M15 11v2"/></symbol>
+    <symbol id="i-shaker" viewBox="0 0 24 24"><path d="M8 3h8l-1 5H9z"/><path d="M9 8h6l1 11a2 2 0 0 1-2 2h-4a2 2 0 0 1-2-2z"/><path d="M9.5 13h5"/></symbol>
+    <symbol id="i-droplet" viewBox="0 0 24 24"><path d="M12 3s6 6.5 6 10a6 6 0 0 1-12 0c0-3.5 6-10 6-10z"/></symbol>
+    <!-- what we offer -->
+    <symbol id="i-chart" viewBox="0 0 24 24"><rect x="4" y="3" width="16" height="18" rx="2"/><path d="M8 14v3M12 10v7M16 7v10"/></symbol>
+    <symbol id="i-meal" viewBox="0 0 24 24"><path d="M3 12h18a9 9 0 0 1-18 0z"/><path d="M12 8c0-3 2-5 5-5 0 3-2 5-5 5z"/><path d="M2 21h20"/></symbol>
+    <symbol id="i-trainer" viewBox="0 0 24 24"><circle cx="8" cy="7" r="3"/><circle cx="17" cy="9" r="2.5"/><path d="M3 20v-2a5 5 0 0 1 10 0v2"/><path d="M15 20v-1.5a4 4 0 0 1 6-3.4"/></symbol>
+    <symbol id="i-star" viewBox="0 0 24 24"><path d="M12 3l2.6 6.3 6.4.5-4.9 4.2 1.5 6.2L12 17l-5.6 3.2 1.5-6.2L3 9.8l6.4-.5z"/></symbol>
+    <!-- shared "and many more" marker -->
+    <symbol id="i-plus" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 8v8M8 12h8"/></symbol>
+</svg>
 
    <!-- Navigation Bar -->
 <nav class="fixed top-0 left-0 right-0 z-50 bg-black/90 backdrop-blur-md border-b border-gray-800 transition-all duration-300">
@@ -81,8 +318,7 @@
 </nav>
 
 <!-- Home Section -->
-<section id="home" class="bg-section min-h-screen flex items-center justify-center text-center px-4 pt-16" style="background-image: url('https://images.unsplash.com/photo-1497366216548-37526070297c?auto=format&fit=crop&w=1920&q=80');">
-    <div class="bg-overlay"></div>
+<section id="home" class="bg-section min-h-screen flex items-center justify-center text-center px-4 pt-16">
     <div class="relative z-10 max-w-3xl mx-auto space-y-6">
         <h1 class="text-4xl sm:text-6xl font-extrabold tracking-tight text-white uppercase">
             Welcome to <span class="text-amber-500">The Royal Gym</span>
@@ -99,304 +335,195 @@
 </section>
 
 <!-- What We Have Section -->
-<section id="what-we-have" class="bg-section min-h-screen py-28 px-4 sm:px-6 lg:px-8" style="background-image: url('https://images.unsplash.com/photo-1534438327276-14e5300c3a48?auto=format&fit=crop&w=1920&q=80');">
-    <div class="bg-overlay"></div>
-    <div class="relative z-10 max-w-7xl mx-auto w-full space-y-16">
-        
+<section id="what-we-have" class="bg-section min-h-screen py-28 px-4 sm:px-6 lg:px-8">
+    <div class="relative z-10 max-w-6xl mx-auto w-full space-y-14">
+
         <div class="text-center space-y-3">
             <h2 class="text-3xl sm:text-5xl font-extrabold tracking-tight text-amber-500 uppercase">What We Have</h2>
             <p class="text-gray-300 max-w-2xl mx-auto text-base sm:text-lg">Take a detailed tour through our elite collection of professional-grade machines, specialized zones, and luxury facilities.</p>
         </div>
 
         <!-- Cardio Equipment -->
-        <div class="space-y-6">
+        <div class="space-y-5">
             <div class="border-l-4 border-amber-500 pl-4">
-                <h3 class="text-2xl font-bold text-white">Cardio Equipment</h3>
+                <h3 class="text-xl font-bold text-white">Cardio Equipment</h3>
                 <p class="text-gray-400 text-sm">Boost your endurance, burn calories efficiently, and enhance cardiovascular health.</p>
             </div>
-            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                
-                <!-- Cross-Trainer Machines -->
-                <div class="bg-gray-900/90 border border-gray-800 rounded-xl overflow-hidden shadow-xl hover:border-amber-500 transition-all flex flex-col">
-                    <img src="https://images.unsplash.com/photo-1662386392766-9edacc1318fd?q=80&w=1170&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D" alt="Cross-Trainer Machines" class="h-48 w-full object-cover">
-                    <div class="p-6 flex-1 flex flex-col justify-between">
-                        <div>
-                            <h4 class="text-lg font-bold text-amber-400 mb-2">Cross-Trainer Machines</h4>
-                            <p class="text-gray-300 text-sm">Low-impact full-body workouts that protect your joints while maximizing calorie burn and toning both upper and lower body simultaneously.</p>
-                        </div>
-                    </div>
+            <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
+
+                <div class="tile">
+                    <svg fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><use href="#i-elliptical"/></svg>
+                    <h4>Cross-Trainer Machines</h4>
+                    <p>Low-impact full-body workouts that protect your joints while maximizing calorie burn and toning both upper and lower body simultaneously.</p>
                 </div>
 
-                <!-- Treadmill Machines -->
-                <div class="bg-gray-900/90 border border-gray-800 rounded-xl overflow-hidden shadow-xl hover:border-amber-500 transition-all flex flex-col">
-                    <img src="https://images.unsplash.com/photo-1652364653960-1c23c208ef43?q=80&w=880&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D" alt="Treadmill Machines" class="h-48 w-full object-cover">
-                    <div class="p-6 flex-1 flex flex-col justify-between">
-                        <div>
-                            <h4 class="text-lg font-bold text-amber-400 mb-2">Treadmill Machines</h4>
-                            <p class="text-gray-300 text-sm">High-performance commercial treadmills featuring customizable incline levels, shock-absorption running decks, and built-in heart rate monitors.</p>
-                        </div>
-                    </div>
+                <div class="tile">
+                    <svg fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><use href="#i-treadmill"/></svg>
+                    <h4>Treadmill Machines</h4>
+                    <p>High-performance commercial treadmills featuring customizable incline levels, shock-absorption running decks, and built-in heart rate monitors.</p>
                 </div>
 
-                <!-- Stationary Bikes -->
-                <div class="bg-gray-900/90 border border-gray-800 rounded-xl overflow-hidden shadow-xl hover:border-amber-500 transition-all flex flex-col">
-                    <img src="https://images.unsplash.com/photo-1637633716870-3460aa785ff4?q=80&w=1170&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D" alt="Stationary Bikes" class="h-48 w-full object-cover">
-                    <div class="p-6 flex-1 flex flex-col justify-between">
-                        <div>
-                            <h4 class="text-lg font-bold text-amber-400 mb-2">Stationary Bikes</h4>
-                            <p class="text-gray-300 text-sm">Ergonomic upright and recumbent stationary bikes designed for intense leg strengthening, endurance cycling, and comfortable posture support.</p>
-                        </div>
-                    </div>
+                <div class="tile">
+                    <svg fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><use href="#i-bike"/></svg>
+                    <h4>Stationary Bikes</h4>
+                    <p>Ergonomic upright and recumbent stationary bikes designed for intense leg strengthening, endurance cycling, and comfortable posture support.</p>
                 </div>
 
-                <!-- HIIT-Training Area -->
-                <div class="bg-gray-900/90 border border-gray-800 rounded-xl overflow-hidden shadow-xl hover:border-amber-500 transition-all flex flex-col">
-                    <img src="https://images.unsplash.com/photo-1591258370814-01609b341790?q=80&w=687&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D" alt="HIIT-Training Area" class="h-48 w-full object-cover">
-                    <div class="p-6 flex-1 flex flex-col justify-between">
-                        <div>
-                            <h4 class="text-lg font-bold text-amber-400 mb-2">HIIT-Training Area</h4>
-                            <p class="text-gray-300 text-sm">A dedicated open space equipped with battle ropes, agility ladders, plyo boxes, and medicine balls for high-intensity interval training.</p>
-                        </div>
-                    </div>
+                <div class="tile">
+                    <svg fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><use href="#i-bolt"/></svg>
+                    <h4>HIIT-Training Area</h4>
+                    <p>A dedicated open space equipped with battle ropes, agility ladders, plyo boxes, and medicine balls for high-intensity interval training.</p>
                 </div>
 
-                <!-- And Many More (Cardio) -->
-                <div class="bg-gray-900/90 border border-gray-800 rounded-xl p-6 shadow-xl hover:border-amber-500 transition-all flex flex-col justify-center items-center text-center">
-                    <div class="text-amber-500 text-4xl mb-3">✨</div>
-                    <h4 class="text-lg font-bold text-amber-400 mb-2">And Many More</h4>
-                    <p class="text-gray-300 text-sm">Various specialized cardio add-ons and advanced heart-rate tracking apparatuses available.</p>
+                <div class="tile tile-more">
+                    <svg fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><use href="#i-plus"/></svg>
+                    <h4>And Many More</h4>
+                    <p>Various specialized cardio add-ons and advanced heart-rate tracking apparatuses available.</p>
                 </div>
 
             </div>
         </div>
 
         <!-- Strength Training Machines -->
-        <div class="space-y-6 pt-6">
+        <div class="space-y-5">
             <div class="border-l-4 border-amber-500 pl-4">
-                <h3 class="text-2xl font-bold text-white">Strength Training Machines</h3>
+                <h3 class="text-xl font-bold text-white">Strength Training Machines</h3>
                 <p class="text-gray-400 text-sm">Isolate muscles with pin-point accuracy using premium selectorized and plate-loaded machines.</p>
             </div>
-            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                
-                <!-- Hip Abductor/Adductor Machine -->
-                <div class="bg-gray-900/90 border border-gray-800 rounded-xl overflow-hidden shadow-xl hover:border-amber-500 transition-all flex flex-col">
-                    <img src="https://images.unsplash.com/photo-1576491742123-735882d4ca7e?q=80&w=1172&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D" alt="Hip Abductor/Adductor Machine" class="h-48 w-full object-cover">
-                    <div class="p-6 flex-1 flex flex-col justify-between">
-                        <div>
-                            <h4 class="text-lg font-bold text-amber-400 mb-2">Hip Abductor/Adductor Machine</h4>
-                            <p class="text-gray-300 text-sm">Targets outer and inner thigh muscles effectively, improving core stability and lower-body mobility.</p>
-                        </div>
-                    </div>
+            <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
+
+                <div class="tile">
+                    <svg fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><use href="#i-abductor"/></svg>
+                    <h4>Hip Abductor/Adductor Machine</h4>
+                    <p>Targets outer and inner thigh muscles effectively, improving core stability and lower-body mobility.</p>
                 </div>
 
-                <!-- Leg Extension Machine -->
-                <div class="bg-gray-900/90 border border-gray-800 rounded-xl overflow-hidden shadow-xl hover:border-amber-500 transition-all flex flex-col">
-                    <img src="https://images.unsplash.com/photo-1738524107966-23c49aa65ba3?q=80&w=687&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D" alt="Leg Extension Machine" class="h-48 w-full object-cover">
-                    <div class="p-6 flex-1 flex flex-col justify-between">
-                        <div>
-                            <h4 class="text-lg font-bold text-amber-400 mb-2">Leg Extension Machine</h4>
-                            <p class="text-gray-300 text-sm">Isolates and strengthens the quadriceps with smooth resistance arcs for defined leg muscle growth.</p>
-                        </div>
-                    </div>
+                <div class="tile">
+                    <svg fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><use href="#i-leg-ext"/></svg>
+                    <h4>Leg Extension Machine</h4>
+                    <p>Isolates and strengthens the quadriceps with smooth resistance arcs for defined leg muscle growth.</p>
                 </div>
 
-                <!-- Leg Curl Machine -->
-                <div class="bg-gray-900/90 border border-gray-800 rounded-xl overflow-hidden shadow-xl hover:border-amber-500 transition-all flex flex-col">
-                    <img src="https://images.unsplash.com/photo-1641785041080-54b0413a2aa9?q=80&w=1170&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D" alt="Leg Curl Machine" class="h-48 w-full object-cover">
-                    <div class="p-6 flex-1 flex flex-col justify-between">
-                        <div>
-                            <h4 class="text-lg font-bold text-amber-400 mb-2">Leg Curl Machine</h4>
-                            <p class="text-gray-300 text-sm">Focuses on hamstring development, boosting posterior chain power and knee joint stability.</p>
-                        </div>
-                    </div>
+                <div class="tile">
+                    <svg fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><use href="#i-leg-curl"/></svg>
+                    <h4>Leg Curl Machine</h4>
+                    <p>Focuses on hamstring development, boosting posterior chain power and knee joint stability.</p>
                 </div>
 
-                <!-- Leg Press Machine -->
-                <div class="bg-gray-900/90 border border-gray-800 rounded-xl overflow-hidden shadow-xl hover:border-amber-500 transition-all flex flex-col">
-                    <img src="https://images.unsplash.com/photo-1712992031203-45538d32ab43?q=80&w=1170&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D" alt="Leg Press Machine" class="h-48 w-full object-cover">
-                    <div class="p-6 flex-1 flex flex-col justify-between">
-                        <div>
-                            <h4 class="text-lg font-bold text-amber-400 mb-2">Leg Press Machine</h4>
-                            <p class="text-gray-300 text-sm">Allows heavy load pushing safely to build massive leg strength without stressing your lower back.</p>
-                        </div>
-                    </div>
+                <div class="tile">
+                    <svg fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><use href="#i-leg-press"/></svg>
+                    <h4>Leg Press Machine</h4>
+                    <p>Allows heavy load pushing safely to build massive leg strength without stressing your lower back.</p>
                 </div>
 
-                <!-- Hack Squat Machine -->
-                <div class="bg-gray-900/90 border border-gray-800 rounded-xl overflow-hidden shadow-xl hover:border-amber-500 transition-all flex flex-col">
-                    <img src="https://images.unsplash.com/photo-1653276527526-f902a569d3c9?q=80&w=764&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D" alt="Hack Squat Machine" class="h-48 w-full object-cover">
-                    <div class="p-6 flex-1 flex flex-col justify-between">
-                        <div>
-                            <h4 class="text-lg font-bold text-amber-400 mb-2">Hack Squat Machine</h4>
-                            <p class="text-gray-300 text-sm">Guided squat movement designed to target deep quad sweeps and glutes with ultimate safety.</p>
-                        </div>
-                    </div>
+                <div class="tile">
+                    <svg fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><use href="#i-hack-squat"/></svg>
+                    <h4>Hack Squat Machine</h4>
+                    <p>Guided squat movement designed to target deep quad sweeps and glutes with ultimate safety.</p>
                 </div>
 
-                <!-- Chest Press Machine -->
-                <div class="bg-gray-900/90 border border-gray-800 rounded-xl overflow-hidden shadow-xl hover:border-amber-500 transition-all flex flex-col">
-                    <img src="https://images.unsplash.com/photo-1694856677238-07fe09f6e31a?q=80&w=687&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D" alt="Chest Press Machine" class="h-48 w-full object-cover">
-                    <div class="p-6 flex-1 flex flex-col justify-between">
-                        <div>
-                            <h4 class="text-lg font-bold text-amber-400 mb-2">Chest Press Machine</h4>
-                            <p class="text-gray-300 text-sm">Builds pectoral muscles, triceps, and anterior shoulders with a controlled horizontal pushing motion.</p>
-                        </div>
-                    </div>
+                <div class="tile">
+                    <svg fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><use href="#i-chest-press"/></svg>
+                    <h4>Chest Press Machine</h4>
+                    <p>Builds pectoral muscles, triceps, and anterior shoulders with a controlled horizontal pushing motion.</p>
                 </div>
 
-                <!-- Lat Pulldown Machine -->
-                <div class="bg-gray-900/90 border border-gray-800 rounded-xl overflow-hidden shadow-xl hover:border-amber-500 transition-all flex flex-col">
-                    <img src="https://images.unsplash.com/photo-1646072508097-0c8b3cbe44bc?q=80&w=687&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D" alt="Lat Pulldown Machine" class="h-48 w-full object-cover">
-                    <div class="p-6 flex-1 flex flex-col justify-between">
-                        <div>
-                            <h4 class="text-lg font-bold text-amber-400 mb-2">Lat Pulldown Machine</h4>
-                            <p class="text-gray-300 text-sm">Essential for developing wide lats and upper back thickness for a classic V-taper physique.</p>
-                        </div>
-                    </div>
+                <div class="tile">
+                    <svg fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><use href="#i-lat-pulldown"/></svg>
+                    <h4>Lat Pulldown Machine</h4>
+                    <p>Essential for developing wide lats and upper back thickness for a classic V-taper physique.</p>
                 </div>
 
-                <!-- Shoulder Press Machine -->
-                <div class="bg-gray-900/90 border border-gray-800 rounded-xl overflow-hidden shadow-xl hover:border-amber-500 transition-all flex flex-col">
-                    <img src="https://images.unsplash.com/photo-1694856677238-07fe09f6e31a?q=80&w=687&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D" alt="Shoulder Press Machine" class="h-48 w-full object-cover">
-                    <div class="p-6 flex-1 flex flex-col justify-between">
-                        <div>
-                            <h4 class="text-lg font-bold text-amber-400 mb-2">Shoulder Press Machine</h4>
-                            <p class="text-gray-300 text-sm">Overhead vertical press station designed for building broad, powerful deltoids safely.</p>
-                        </div>
-                    </div>
+                <div class="tile">
+                    <svg fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><use href="#i-shoulder-press"/></svg>
+                    <h4>Shoulder Press Machine</h4>
+                    <p>Overhead vertical press station designed for building broad, powerful deltoids safely.</p>
                 </div>
 
-                <!-- Parallel Bar + Abs + Pull-Up Station -->
-                <div class="bg-gray-900/90 border border-gray-800 rounded-xl overflow-hidden shadow-xl hover:border-amber-500 transition-all flex flex-col">
-                    <img src="https://images.unsplash.com/photo-1585152969004-0fb794d6025e?q=80&w=687&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D" alt="Parallel Bar + Abs + Pull-Up Station" class="h-48 w-full object-cover">
-                    <div class="p-6 flex-1 flex flex-col justify-between">
-                        <div>
-                            <h4 class="text-lg font-bold text-amber-400 mb-2">Parallel Bar + Abs + Pull-Up Station</h4>
-                            <p class="text-gray-300 text-sm">Multi-function tower for bodyweight dips, vertical knee raises, and pull-ups to carve your core.</p>
-                        </div>
-                    </div>
+                <div class="tile">
+                    <svg fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><use href="#i-pullup"/></svg>
+                    <h4>Parallel Bar + Abs + Pull-Up Station</h4>
+                    <p>Multi-function tower for bodyweight dips, vertical knee raises, and pull-ups to carve your core.</p>
                 </div>
 
-                <!-- Smith Machines -->
-                <div class="bg-gray-900/90 border border-gray-800 rounded-xl overflow-hidden shadow-xl hover:border-amber-500 transition-all flex flex-col">
-                    <img src="https://images.unsplash.com/photo-1683147778229-e8479ec374ff?q=80&w=687&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D" alt="Smith Machines" class="h-48 w-full object-cover">
-                    <div class="p-6 flex-1 flex flex-col justify-between">
-                        <div>
-                            <h4 class="text-lg font-bold text-amber-400 mb-2">Smith Machines</h4>
-                            <p class="text-gray-300 text-sm">Barbell fixed within steel rails providing guided motion for bench presses, squats, and lunges.</p>
-                        </div>
-                    </div>
+                <div class="tile">
+                    <svg fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><use href="#i-smith"/></svg>
+                    <h4>Smith Machines</h4>
+                    <p>Barbell fixed within steel rails providing guided motion for bench presses, squats, and lunges.</p>
                 </div>
 
-                <!-- Cable Crossover Machines -->
-                <div class="bg-gray-900/90 border border-gray-800 rounded-xl overflow-hidden shadow-xl hover:border-amber-500 transition-all flex flex-col">
-                    <img src="https://images.unsplash.com/photo-1604480133435-25b86862d276?q=80&w=687&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D" alt="Cable Crossover Machines" class="h-48 w-full object-cover">
-                    <div class="p-6 flex-1 flex flex-col justify-between">
-                        <div>
-                            <h4 class="text-lg font-bold text-amber-400 mb-2">Cable Crossover Machines</h4>
-                            <p class="text-gray-300 text-sm">Dual adjustable cable pulleys allowing endless exercise variations for constant tension training.</p>
-                        </div>
-                    </div>
+                <div class="tile">
+                    <svg fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><use href="#i-cable"/></svg>
+                    <h4>Cable Crossover Machines</h4>
+                    <p>Dual adjustable cable pulleys allowing endless exercise variations for constant tension training.</p>
                 </div>
 
-                <!-- And Many More (Strength) -->
-                <div class="bg-gray-900/90 border border-gray-800 rounded-xl p-6 shadow-xl hover:border-amber-500 transition-all flex flex-col justify-center items-center text-center">
-                    <div class="text-amber-500 text-4xl mb-3">🔥</div>
-                    <h4 class="text-lg font-bold text-amber-400 mb-2">And Many More</h4>
-                    <p class="text-gray-300 text-sm">Additional specialized isolated strength training machines and custom attachments.</p>
+                <div class="tile tile-more">
+                    <svg fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><use href="#i-plus"/></svg>
+                    <h4>And Many More</h4>
+                    <p>Additional specialized isolated strength training machines and custom attachments.</p>
                 </div>
 
             </div>
         </div>
 
         <!-- Free Weights -->
-        <div class="space-y-6 pt-6">
+        <div class="space-y-5">
             <div class="border-l-4 border-amber-500 pl-4">
-                <h3 class="text-2xl font-bold text-white">Free Weights</h3>
+                <h3 class="text-xl font-bold text-white">Free Weights</h3>
                 <p class="text-gray-400 text-sm">Build raw strength, stabilizer muscles, and natural movement patterns.</p>
             </div>
-            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-                
-                <!-- Dumbbells -->
-                <div class="bg-gray-900/90 border border-gray-800 rounded-xl overflow-hidden shadow-xl hover:border-amber-500 transition-all flex flex-col">
-                    <img src="https://images.unsplash.com/photo-1534438327276-14e5300c3a48?q=80&w=1170&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D" alt="Dumbbells" class="h-48 w-full object-cover">
-                    <div class="p-6 flex-1 flex flex-col justify-between">
-                        <div>
-                            <h4 class="text-lg font-bold text-amber-400 mb-2">Dumbbells</h4>
-                            <p class="text-gray-300 text-sm">Full professional range of urethane dumbbells starting from lightweight warmups to heavy sets.</p>
-                        </div>
-                    </div>
+            <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
+
+                <div class="tile">
+                    <svg fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><use href="#i-dumbbell"/></svg>
+                    <h4>Dumbbells</h4>
+                    <p>Full professional range of urethane dumbbells starting from lightweight warmups to heavy sets.</p>
                 </div>
 
-                <!-- Barbells -->
-                <div class="bg-gray-900/90 border border-gray-800 rounded-xl overflow-hidden shadow-xl hover:border-amber-500 transition-all flex flex-col">
-                    <img src="https://images.unsplash.com/photo-1685633225198-41691f35cc4c?q=80&w=687&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D" alt="Barbells" class="h-48 w-full object-cover">
-                    <div class="p-6 flex-1 flex flex-col justify-between">
-                        <div>
-                            <h4 class="text-lg font-bold text-amber-400 mb-2">Barbells</h4>
-                            <p class="text-gray-300 text-sm">Straight and EZ-curl Olympic barbells balanced for maximum grip comfort and heavy lifting.</p>
-                        </div>
-                    </div>
+                <div class="tile">
+                    <svg fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><use href="#i-barbell"/></svg>
+                    <h4>Barbells</h4>
+                    <p>Straight and EZ-curl Olympic barbells balanced for maximum grip comfort and heavy lifting.</p>
                 </div>
 
-                <!-- Weight Plates -->
-                <div class="bg-gray-900/90 border border-gray-800 rounded-xl overflow-hidden shadow-xl hover:border-amber-500 transition-all flex flex-col">
-                    <img src="https://images.unsplash.com/photo-1590238869117-d68df0152f96?q=80&w=1074&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D" alt="Weight Plates" class="h-48 w-full object-cover">
-                    <div class="p-6 flex-1 flex flex-col justify-between">
-                        <div>
-                            <h4 class="text-lg font-bold text-amber-400 mb-2">Weight Plates</h4>
-                            <p class="text-gray-300 text-sm">Rubberized bumper plates and cast iron weight plates for precise load progression.</p>
-                        </div>
-                    </div>
+                <div class="tile">
+                    <svg fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><use href="#i-plate"/></svg>
+                    <h4>Weight Plates</h4>
+                    <p>Rubberized bumper plates and cast iron weight plates for precise load progression.</p>
                 </div>
 
-                <!-- And Many More (Free Weights) -->
-                <div class="bg-gray-900/90 border border-gray-800 rounded-xl p-6 shadow-xl hover:border-amber-500 transition-all flex flex-col justify-center items-center text-center">
-                    <div class="text-amber-500 text-4xl mb-3">💪</div>
-                    <h4 class="text-lg font-bold text-amber-400 mb-2">And Many More</h4>
-                    <p class="text-gray-300 text-sm">Kettlebells, medicine balls, weight trees, and specialized lifting belts.</p>
+                <div class="tile tile-more">
+                    <svg fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><use href="#i-plus"/></svg>
+                    <h4>And Many More</h4>
+                    <p>Kettlebells, medicine balls, weight trees, and specialized lifting belts.</p>
                 </div>
 
             </div>
         </div>
 
-        <!-- Facilities Grid (Changing rooms, Supplement bar, Hydration Hub) -->
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 pt-6">
-            
-            <!-- Changing Rooms -->
-            <div class="bg-gray-900/90 border border-gray-800 rounded-xl overflow-hidden shadow-xl hover:border-amber-500 transition-all flex flex-col">
-                <img src="https://images.unsplash.com/photo-1545693315-85b6be26a3d6?q=80&w=1171&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D"" alt="Changing Rooms" class="h-48 w-full object-cover">
-                <div class="p-6 flex-1 flex flex-col justify-between">
-                    <div>
-                        <h3 class="text-xl font-bold text-amber-400 mb-2">Changing Rooms & Washrooms</h3>
-                        <p class="text-gray-300 text-sm">Separate, hygienic, and secure male and female washrooms and changing rooms equipped with hot water showers and lockers.</p>
-                    </div>
-                    <div class="mt-4 pt-4 border-t border-gray-800 text-amber-400 text-xs font-semibold uppercase tracking-wider">And Many More Facilities</div>
-                </div>
+        <!-- Facilities (Changing rooms, Supplement bar, Hydration Hub) -->
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-5">
+
+            <div class="panel">
+                <svg fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><use href="#i-locker"/></svg>
+                <h3 class="text-lg font-bold text-amber-400">Changing Rooms &amp; Washrooms</h3>
+                <p class="text-gray-300 text-sm flex-1">Separate, hygienic, and secure male and female washrooms and changing rooms equipped with hot water showers and lockers.</p>
+                <div class="pt-3 border-t border-white/10 text-amber-400/80 text-[0.65rem] font-semibold uppercase tracking-[0.15em]">And Many More Facilities</div>
             </div>
 
-            <!-- Supplement Bar -->
-            <div class="bg-gray-900/90 border border-gray-800 rounded-xl overflow-hidden shadow-xl hover:border-amber-500 transition-all flex flex-col">
-                <img src="https://images.unsplash.com/photo-1671033580695-8e4f799c9fb4?q=80&w=1025&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D" alt="Supplement Bar" class="h-48 w-full object-cover">
-                <div class="p-6 flex-1 flex flex-col justify-between">
-                    <div>
-                        <h3 class="text-xl font-bold text-amber-400 mb-2">Snacks & Supplements</h3>
-                        <p class="text-gray-300 text-sm">Snacks, pre-workouts, and supplement refrigerators stocked with top-tier protein shakes and energy drinks for optimal recovery.</p>
-                    </div>
-                    <div class="mt-4 pt-4 border-t border-gray-800 text-amber-400 text-xs font-semibold uppercase tracking-wider">And Many More Snacks</div>
-                </div>
+            <div class="panel">
+                <svg fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><use href="#i-shaker"/></svg>
+                <h3 class="text-lg font-bold text-amber-400">Snacks &amp; Supplements</h3>
+                <p class="text-gray-300 text-sm flex-1">Snacks, pre-workouts, and supplement refrigerators stocked with top-tier protein shakes and energy drinks for optimal recovery.</p>
+                <div class="pt-3 border-t border-white/10 text-amber-400/80 text-[0.65rem] font-semibold uppercase tracking-[0.15em]">And Many More Snacks</div>
             </div>
 
-            <!-- Hydration Hub -->
-            <div class="bg-gray-900/90 border border-gray-800 rounded-xl overflow-hidden shadow-xl hover:border-amber-500 transition-all flex flex-col">
-                <img src="https://images.unsplash.com/photo-1685186112493-564c68f75d57?q=80&w=1074&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D" alt="Hydration Hub" class="h-48 w-full object-cover">
-                <div class="p-6 flex-1 flex flex-col justify-between">
-                    <div>
-                        <h3 class="text-xl font-bold text-amber-400 mb-2">Water Filter Hub</h3>
-                        <p class="text-gray-300 text-sm">Multi-temperature water filtration stations providing chilled, hot, and normal drinking water to keep you hydrated.</p>
-                    </div>
-                    <div class="mt-4 pt-4 border-t border-gray-800 text-amber-400 text-xs font-semibold uppercase tracking-wider">And Many More Options</div>
-                </div>
+            <div class="panel">
+                <svg fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><use href="#i-droplet"/></svg>
+                <h3 class="text-lg font-bold text-amber-400">Water Filter Hub</h3>
+                <p class="text-gray-300 text-sm flex-1">Multi-temperature water filtration stations providing chilled, hot, and normal drinking water to keep you hydrated.</p>
+                <div class="pt-3 border-t border-white/10 text-amber-400/80 text-[0.65rem] font-semibold uppercase tracking-[0.15em]">And Many More Options</div>
             </div>
 
         </div>
@@ -405,38 +532,41 @@
 </section>
 
 <!-- What We Offer Section -->
-<section id="what-we-offer" class="bg-section min-h-screen py-24 px-4 sm:px-6 lg:px-8 flex items-center justify-center" style="background-image: url('https://images.unsplash.com/photo-1517838277536-f5f99be501cd?auto=format&fit=crop&w=1920&q=80');">
-    <div class="bg-overlay"></div>
-    <div class="relative z-10 max-w-6xl mx-auto text-center space-y-12 w-full">
+<section id="what-we-offer" class="bg-section min-h-screen py-24 px-4 sm:px-6 lg:px-8 flex items-center justify-center">
+    <div class="relative z-10 max-w-5xl mx-auto text-center space-y-12 w-full">
         <h2 class="text-3xl sm:text-5xl font-bold tracking-tight text-amber-500 uppercase">What We Offer</h2>
-        <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
-            <div class="bg-black/80 border border-gray-800 p-6 rounded-2xl shadow-xl space-y-4">
-                <div class="text-amber-500 text-4xl">🏋️‍♂️</div>
-                <h3 class="text-xl font-bold text-white">Workout Charts</h3>
-                <p class="text-gray-300 text-sm">Customized workout routines tailored specifically to your body type and fitness level.</p>
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+
+            <div class="panel items-center text-center">
+                <svg fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><use href="#i-chart"/></svg>
+                <h3 class="text-base font-bold text-white">Workout Charts</h3>
+                <p class="text-gray-400 text-sm">Customized workout routines tailored specifically to your body type and fitness level.</p>
             </div>
-            <div class="bg-black/80 border border-gray-800 p-6 rounded-2xl shadow-xl space-y-4">
-                <div class="text-amber-500 text-4xl">🥗</div>
-                <h3 class="text-xl font-bold text-white">Meal Plans</h3>
-                <p class="text-gray-300 text-sm">Nutritional guidance and scientifically backed meal plans to accelerate muscle growth or fat loss.</p>
+
+            <div class="panel items-center text-center">
+                <svg fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><use href="#i-meal"/></svg>
+                <h3 class="text-base font-bold text-white">Meal Plans</h3>
+                <p class="text-gray-400 text-sm">Nutritional guidance and scientifically backed meal plans to accelerate muscle growth or fat loss.</p>
             </div>
-            <div class="bg-black/80 border border-gray-800 p-6 rounded-2xl shadow-xl space-y-4">
-                <div class="text-amber-500 text-4xl">🤝</div>
-                <h3 class="text-xl font-bold text-white">Personal Training</h3>
-                <p class="text-gray-300 text-sm">One-on-one expert guidance and continuous motivation from professional trainers.</p>
+
+            <div class="panel items-center text-center">
+                <svg fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><use href="#i-trainer"/></svg>
+                <h3 class="text-base font-bold text-white">Personal Training</h3>
+                <p class="text-gray-400 text-sm">One-on-one expert guidance and continuous motivation from professional trainers.</p>
             </div>
-            <div class="bg-black/80 border border-gray-800 p-6 rounded-2xl shadow-xl space-y-4 flex flex-col justify-center items-center">
-                <div class="text-amber-500 text-4xl">🌟</div>
-                <h3 class="text-xl font-bold text-white">And Many More</h3>
-                <p class="text-gray-300 text-sm">Body composition analysis, progress tracking sessions, and exclusive VIP guest passes.</p>
+
+            <div class="panel items-center text-center">
+                <svg fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><use href="#i-star"/></svg>
+                <h3 class="text-base font-bold text-white">And Many More</h3>
+                <p class="text-gray-400 text-sm">Body composition analysis, progress tracking sessions, and exclusive VIP guest passes.</p>
             </div>
+
         </div>
     </div>
 </section>
 
 <!-- Pricing Section -->
-<section id="pricing" class="bg-section min-h-screen py-24 px-4 sm:px-6 lg:px-8 flex items-center justify-center text-center" style="background-image: url('https://images.unsplash.com/photo-1540497077202-7c8a3999166f?auto=format&fit=crop&w=1920&q=80');">
-    <div class="bg-overlay"></div>
+<section id="pricing" class="bg-section min-h-screen py-24 px-4 sm:px-6 lg:px-8 flex items-center justify-center text-center">
     <div class="relative z-10 max-w-2xl mx-auto space-y-6">
         <h2 class="text-3xl sm:text-5xl font-bold tracking-tight text-amber-500 uppercase">Pricing</h2>
         <p class="text-gray-300 text-lg">Flexible and transparent pricing packages coming soon. Stay tuned for royal rates!</p>
@@ -444,8 +574,7 @@
 </section>
 
 <!-- Contact Section -->
-<section id="contact" class="bg-section min-h-screen py-24 px-4 sm:px-6 lg:px-8 flex items-center justify-center text-center" style="background-image: url('https://images.unsplash.com/photo-1574680096145-d05b474e2155?auto=format&fit=crop&w=1920&q=80');">
-    <div class="bg-overlay"></div>
+<section id="contact" class="bg-section min-h-screen py-24 px-4 sm:px-6 lg:px-8 flex items-center justify-center text-center">
     <div class="relative z-10 max-w-2xl mx-auto space-y-6">
         <h2 class="text-3xl sm:text-5xl font-bold tracking-tight text-amber-500 uppercase">Contact Us</h2>
         <p class="text-gray-300 text-lg">Get in touch with us or visit the gym directly. Contact details and location map will be updated soon.</p>
@@ -472,6 +601,240 @@
             menu.classList.add('hidden');
         });
     });
+</script>
+
+<!-- Scroll-driven frame-sequence background -->
+<script>
+(function () {
+    'use strict';
+
+    var TOTAL       = 240;          // frames on disk: ezgif-frame-001.jpg .. -240.jpg
+    var DIR         = 'frames/';    // relative — a project Page lives under /<repo>/
+    var CONCURRENCY = 16;           // parallel image requests during preload
+    var BAILOUT_MS  = 20000;        // never let a stalled image trap the visitor
+
+    var isPhone  = window.matchMedia('(max-width: 768px)').matches;
+    var reduced  = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    var STEP     = isPhone ? 2 : 1; // phones play every 2nd frame (~3.5 MB instead of 7 MB)
+    var DPR_CAP  = isPhone ? 1.5 : 2;
+    // The side-fill is needed on phones too: a modern handset is ~9:19.5, so a
+    // contained 9:16 frame still leaves ~145px of bar top and bottom.
+    // Drawing it costs one drawImage into a ~47x101 canvas.
+
+    var stage  = document.getElementById('bg-stage');
+    var main   = document.getElementById('bg-main');
+    var blur   = document.getElementById('bg-blur');
+    var pre    = document.getElementById('preloader');
+    var preBar = document.getElementById('pre-bar');
+    var prePct = document.getElementById('pre-pct');
+
+    // alpha must stay true: an opaque context would paint a black letterbox
+    // over the blur layer and hide the side-fill entirely.
+    var mctx = main.getContext('2d');
+    var bctx = blur.getContext('2d');
+
+    // Build the list of frame numbers we will actually request.
+    var nums = [];
+    for (var n = 1; n <= TOTAL; n += STEP) nums.push(n);
+    var COUNT  = nums.length;
+    var frames = new Array(COUNT);
+
+    function src(n) {
+        return DIR + 'ezgif-frame-' + String(n).padStart(3, '0') + '.jpg';
+    }
+
+    /* ---------- sizing ---------- */
+
+    var stageW = 0, stageH = 0, lastW = -1, lastH = -1;
+
+    function sizeCanvases(force) {
+        var w = stage.clientWidth;
+        var h = stage.clientHeight;
+        // Mobile address bars fire resize constantly; ignore small height churn.
+        if (!force && w === lastW && Math.abs(h - lastH) < 100) return false;
+        lastW = w; lastH = h;
+
+        var dpr = Math.min(window.devicePixelRatio || 1, DPR_CAP);
+        stageW = Math.max(1, Math.round(w * dpr));
+        stageH = Math.max(1, Math.round(h * dpr));
+        main.width  = stageW;
+        main.height = stageH;
+
+        // Blur backing store must share the stage aspect ratio, otherwise the
+        // blur layer letterboxes itself and shows hard bands.
+        blur.width  = Math.max(1, Math.round(stageW / 8));
+        blur.height = Math.max(1, Math.round(stageH / 8));
+        return true;
+    }
+
+    /* ---------- drawing ---------- */
+
+    function drawFit(ctx, img, W, H, mode) {
+        var s = mode === 'cover'
+            ? Math.max(W / img.width, H / img.height)
+            : Math.min(W / img.width, H / img.height);
+        var w = img.width * s, h = img.height * s;
+        ctx.drawImage(img, (W - w) / 2, (H - h) / 2, w, h);
+    }
+
+    var painted = -1;
+
+    function paint(i) {
+        var img = frames[i];
+        if (!img || !img.complete || !img.naturalWidth) return;
+        mctx.clearRect(0, 0, stageW, stageH);
+        drawFit(mctx, img, stageW, stageH, 'contain');
+        drawFit(bctx, img, blur.width, blur.height, 'cover');
+        painted = i;
+    }
+
+    /* ---------- scroll -> frame ---------- */
+
+    var maxScroll = 1, target = 0, queued = false;
+
+    function measure() {
+        maxScroll = Math.max(1, document.documentElement.scrollHeight - window.innerHeight);
+    }
+
+    function render() {
+        queued = false;
+        // Nearest already-loaded frame, so a gap never blanks the screen.
+        var i = target;
+        if (!frames[i] || !frames[i].complete) {
+            for (var d = 1; d < COUNT; d++) {
+                if (frames[i - d] && frames[i - d].complete) { i = i - d; break; }
+                if (frames[i + d] && frames[i + d].complete) { i = i + d; break; }
+            }
+        }
+        if (i !== painted) paint(i);
+    }
+
+    // Coalesce to at most one paint per animation frame. Scheduling on demand
+    // beats a permanent rAF loop: the main thread stays asleep while the page
+    // is idle instead of waking 60x a second to do nothing.
+    function schedule() {
+        if (queued) return;
+        queued = true;
+        requestAnimationFrame(render);
+    }
+
+    function onScroll() {
+        var p = window.scrollY / maxScroll;
+        p = p < 0 ? 0 : p > 1 ? 1 : p;
+        var i = Math.round(p * (COUNT - 1));
+        if (i !== target) { target = i; schedule(); }
+    }
+
+    /* ---------- preload ---------- */
+
+    var next = 0, done = 0, finished = false, bail = null;
+
+    function bump() {
+        done++;
+        var pct = Math.round(done / COUNT * 100);
+        preBar.style.width = pct + '%';
+        prePct.textContent = pct + '%';
+        if (done >= COUNT) finish();
+        else spawn();
+    }
+
+    function spawn() {
+        if (next >= COUNT) return;
+        var i = next++;
+        var img = new Image();
+        frames[i] = img;
+        // No img.decode(): forcing 240 decoded 720x1280 bitmaps resident is
+        // ~880 MB and will OOM a low-end phone. Let the browser decode lazily.
+        img.onload = function () {
+            if (i === 0 && painted < 0) paint(0);
+            bump();
+        };
+        img.onerror = bump;
+        img.src = src(nums[i]);
+    }
+
+    function finish() {
+        if (finished) return;
+        finished = true;
+        if (bail) clearTimeout(bail);
+
+        document.documentElement.classList.remove('preloading');
+        measure();
+        schedule();
+
+        pre.classList.add('is-done');
+        setTimeout(function () {
+            if (pre.parentNode) pre.parentNode.removeChild(pre);
+        }, 700);
+
+        // Honour a deep link that the scroll lock swallowed during preload.
+        if (location.hash) {
+            var t = document.querySelector(location.hash);
+            if (t) {
+                var prev = document.documentElement.style.scrollBehavior;
+                document.documentElement.style.scrollBehavior = 'auto';
+                t.scrollIntoView();
+                document.documentElement.style.scrollBehavior = prev;
+            }
+        }
+        onScroll();
+    }
+
+    /* ---------- listeners ---------- */
+
+    window.addEventListener('scroll', function () { onScroll(); }, { passive: true });
+
+    var resizeTimer = null;
+    function onResize() {
+        clearTimeout(resizeTimer);
+        resizeTimer = setTimeout(function () {
+            if (sizeCanvases(false)) { measure(); painted = -1; schedule(); }
+            else measure();
+        }, 150);
+    }
+    window.addEventListener('resize', onResize);
+    window.addEventListener('orientationchange', function () {
+        setTimeout(function () {
+            sizeCanvases(true); measure(); painted = -1; schedule();
+        }, 300);
+    });
+
+    // Web fonts and Tailwind's CDN pass change document height, which changes
+    // the scroll -> frame mapping.
+    if (window.ResizeObserver) {
+        new ResizeObserver(function () { measure(); onScroll(); })
+            .observe(document.body);
+    }
+    window.addEventListener('load', function () { measure(); onScroll(); schedule(); });
+
+    // Backgrounded tabs suspend rAF, and browsers may drop a canvas backing
+    // store under memory pressure. Force a repaint on the way back.
+    document.addEventListener('visibilitychange', function () {
+        if (!document.hidden) { painted = -1; measure(); onScroll(); schedule(); }
+    });
+
+    /* ---------- boot ---------- */
+
+    sizeCanvases(true);
+    measure();
+
+    if (reduced) {
+        // Static first frame only; no sequence, no preloader wait.
+        var one = new Image();
+        frames[0] = one;
+        one.onload  = function () { paint(0); finish(); };
+        one.onerror = finish;
+        one.src = src(1);
+    } else {
+        // Chrome restores the previous scroll offset on reload, which fires
+        // after the preloader releases the lock and lands you mid-page on the
+        // wrong frame. Always open on frame 1.
+        if ('scrollRestoration' in history) history.scrollRestoration = 'manual';
+        window.scrollTo(0, 0);
+        bail = setTimeout(finish, BAILOUT_MS);
+        for (var k = 0; k < CONCURRENCY; k++) spawn();
+    }
+})();
 </script>
 </body>
 </html>
